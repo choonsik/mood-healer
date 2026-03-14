@@ -1,17 +1,15 @@
-// This file runs on Vercel's Serverless environment.
+const { GoogleGenAI } = require('@google/genai');
 
+// This file runs on Vercel's Serverless environment (CommonJS).
 module.exports = async function handler(req, res) {
-  // We use dynamic import to work around Vercel's ESM vs CommonJS conflicts when using Vite
-  const { GoogleGenAI } = await import('@google/genai');
   // 1. CORS Headers for Hybrid/Dual Deployment
-  // We allow both GitHub Pages and the Vercel app itself to communicate with this backend.
   const allowedOrigins = ['https://choonsik.github.io', 'https://mood-healer.vercel.app'];
   const origin = req.headers.origin;
 
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  
+
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
   res.setHeader(
@@ -32,16 +30,16 @@ module.exports = async function handler(req, res) {
 
   try {
     const { moodText } = req.body;
-    
+
     if (!moodText) {
       return res.status(400).json({ error: 'moodText is required' });
     }
 
     // Initialize Gemini AI securely from server-side env vars
     const apiKey = process.env.GEMINI_API_KEY;
-    
+
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing on the server.");
+      console.error('GEMINI_API_KEY is missing on the server.');
       return res.status(500).json({ error: 'Server configuration error.' });
     }
 
@@ -61,26 +59,25 @@ Response strictly in JSON format matching this structure:
 
     // Call Gemini API
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
-        responseMimeType: "application/json",
-      }
+        responseMimeType: 'application/json',
+      },
     });
 
     const parsedData = JSON.parse(response.text);
     res.status(200).json(parsedData);
-    
   } catch (error) {
-    console.error("Server API Error:", error);
-    
+    console.error('Server API Error:', error);
+
     // Check for Quota Exhaustion
     const errorMessage = error.message?.toLowerCase() || '';
     if (error.status === 429 || errorMessage.includes('quota') || errorMessage.includes('429')) {
       return res.status(429).json({ error: 'QUOTA_EXHAUSTED' });
     }
-    
+
     // Generic server error
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', detail: error.message });
   }
-}
+};
