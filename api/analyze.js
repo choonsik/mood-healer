@@ -1,8 +1,8 @@
-const { GoogleGenAI } = require('@google/genai');
-
 // This file runs on Vercel's Serverless environment.
-// Using CommonJS to avoid ESM "type: module" conflicts in serverless
+
 module.exports = async function handler(req, res) {
+  // We use dynamic import to work around Vercel's ESM vs CommonJS conflicts when using Vite
+  const { GoogleGenAI } = await import('@google/genai');
   // 1. CORS Headers for Hybrid/Dual Deployment
   // We allow both GitHub Pages and the Vercel app itself to communicate with this backend.
   const allowedOrigins = ['https://choonsik.github.io', 'https://mood-healer.vercel.app'];
