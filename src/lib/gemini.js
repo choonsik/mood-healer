@@ -1,47 +1,37 @@
-import { GoogleGenAI } from '@google/genai';
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
 export async function analyzeMood(moodText) {
-  if (!apiKey || apiKey === 'your_api_key_here') {
-    throw new Error('Gemini API 키가 설정되지 않았습니다. .env 파일에 VITE_GEMINI_API_KEY를 입력해주세요.');
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  const prompt = `You are an empathetic, insightful psychologist. The user has shared the following mood/feelings: "${moodText}".
-  
-Please provide a structured response in Korean with two parts:
-1. "심리학적 분석" (Psychological Analysis): Explain gracefully why they might be feeling this way, validating their emotions. Keep it under 3-4 sentences.
-2. "쉬운 극복 방법" (Easy Actionable Solutions): Suggest 3 highly actionable, simple, and soothing methods they can do right now to feel better. Provide them as a bulleted list.
-
-Response strictly in JSON format matching this structure:
-{
-  "analysis": "...",
-  "solutions": ["...", "...", "..."]
-}`;
-
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
+    // Determine the base URL depending on the environment
+    // In local dev, Vite proxy handles it. In production on GH pages, we must point to the Vercel app URL.
+    // For now, we will use a dynamically determined path or a strict production Vercel URL.
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    // You'll need to replace this with your actual Vercel deployment URL during the final Vercel step
+    const API_BASE_URL = isLocalhost ? '' : 'https://mood-healer-api.vercel.app'; 
+    
+    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ moodText })
     });
 
-    return JSON.parse(response.text);
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    
-    // Check if the error is related to quota/rate limits (typically 429)
-    const errorMessage = error.message?.toLowerCase() || '';
-    if (error.status === 429 || errorMessage.includes('quota') || errorMessage.includes('429')) {
-      const quotaError = new Error('무료 토큰 제공량이 모두 소진되었습니다. 잠시 후 다시 시도하거나 내일 다시 찾아주세요.');
-      quotaError.code = 'QUOTA_EXHAUSTED';
-      throw quotaError;
+    if (!response.ok) {
+      if (response.status === 429) {
+        const quotaError = new Error('무료 토큰 제공량이 모두 소진되었습니다. 잠시 후 다시 시도하거나 내일 다시 찾아주세요.');
+        quotaError.code = 'QUOTA_EXHAUSTED';
+        throw quotaError;
+      }
+      throw new Error(`Server returned ${response.status}`);
     }
-    
-    throw new Error('기분 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Fetch API Error:", error);
+    if (error.code === 'QUOTA_EXHAUSTED') {
+      throw error;
+    }
+    throw new Error('기분 분석 중 서버 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
   }
 }
