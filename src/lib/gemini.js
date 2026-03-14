@@ -5,8 +5,8 @@ export async function analyzeMood(moodText) {
     // For now, we will use a dynamically determined path or a strict production Vercel URL.
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    // You'll need to replace this with your actual Vercel deployment URL during the final Vercel step
-    const API_BASE_URL = isLocalhost ? '' : 'https://mood-healer-api.vercel.app'; 
+    // Use the production Vercel URL
+    const API_BASE_URL = isLocalhost ? '' : 'https://mood-healer.vercel.app'; 
     
     const response = await fetch(`${API_BASE_URL}/api/analyze`, {
       method: 'POST',

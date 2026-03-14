@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   // 1. CORS Headers for Hybrid Deployment
   // We must allow the frontend (GitHub Pages) to communicate with this Vercel backend.
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Or specify your GitHub Pages URL e.g. 'https://choonsik.github.io'
+  res.setHeader('Access-Control-Allow-Origin', 'https://choonsik.github.io'); // Specific origin for security
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
   res.setHeader(
     'Access-Control-Allow-Headers',
