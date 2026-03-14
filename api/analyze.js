@@ -3,10 +3,16 @@ import { GoogleGenAI } from '@google/genai';
 // This file runs on Vercel's Serverless environment.
 // It uses the server-side environment variable GEMINI_API_KEY.
 export default async function handler(req, res) {
-  // 1. CORS Headers for Hybrid Deployment
-  // We must allow the frontend (GitHub Pages) to communicate with this Vercel backend.
+  // 1. CORS Headers for Hybrid/Dual Deployment
+  // We allow both GitHub Pages and the Vercel app itself to communicate with this backend.
+  const allowedOrigins = ['https://choonsik.github.io', 'https://mood-healer.vercel.app'];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', 'https://choonsik.github.io'); // Specific origin for security
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
   res.setHeader(
     'Access-Control-Allow-Headers',
