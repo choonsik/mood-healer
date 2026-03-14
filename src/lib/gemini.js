@@ -33,6 +33,15 @@ Response strictly in JSON format matching this structure:
     return JSON.parse(response.text);
   } catch (error) {
     console.error("Gemini API Error:", error);
+    
+    // Check if the error is related to quota/rate limits (typically 429)
+    const errorMessage = error.message?.toLowerCase() || '';
+    if (error.status === 429 || errorMessage.includes('quota') || errorMessage.includes('429')) {
+      const quotaError = new Error('무료 토큰 제공량이 모두 소진되었습니다. 잠시 후 다시 시도하거나 내일 다시 찾아주세요.');
+      quotaError.code = 'QUOTA_EXHAUSTED';
+      throw quotaError;
+    }
+    
     throw new Error('기분 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
   }
 }
